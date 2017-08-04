@@ -35,20 +35,20 @@ exports.handler = (event, context, callback) => {
                     // get zoneId
                     console.log("tags: ", JSON.stringify(inst, null ,2));
                     var zoneId = "";
-                    var cName = "";
+                    var cname = "";
                     for (var l=0; l < inst.Tags.length; l++) {
                         var tag = inst.Tags[l];
                         if (tag.Key === "zoneId") {
                             zoneId = tag.Value;
                         }
-                        if (tag.Key === "cName") {
-                            cName = tag.Value;
+                        if (tag.Key === "cname") {
+                            cname = tag.Value;
                         }
                     }
                     
-                    if (zoneId === "" || cName === "") {
-                        console.log("zoneId or cName are not defined in ec2 tag.");
-                        callback("zoneId or cName are not defined in ec2 tag.", null);
+                    if (zoneId === "" || cname === "") {
+                        console.log("zoneId or cname are not defined in ec2 tag.");
+                        callback("zoneId or cname are not defined in ec2 tag.", null);
                         return;
                     }
                     
@@ -60,7 +60,7 @@ exports.handler = (event, context, callback) => {
                                 {
                                     "Action": "UPSERT",
                                     "ResourceRecordSet": {
-                                        "Name": cName,
+                                        "Name": cname,
                                         "Type": "A",
                                         "TTL": 60,
                                         "ResourceRecords": [
@@ -80,7 +80,7 @@ exports.handler = (event, context, callback) => {
                             callback(err, null);
                             return;
                         }
-                        console.log("Updated Zone Cname: " + cName + " with new value: " + newCnameValue);
+                        console.log("Updated Zone Cname: " + cname + " with new value: " + newCnameValue);
                         callback(null, "done.");
                         return;
                     });
