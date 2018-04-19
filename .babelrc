@@ -1,0 +1,10 @@
+{
+  "comments": false,
+  "presets": [
+    [ "env", { "node": "6.10" } ]
+  ],
+  "plugins": [
+    "transform-object-rest-spread",
+    "source-map-support"
+  ]
+}

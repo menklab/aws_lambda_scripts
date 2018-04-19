@@ -1,0 +1,63 @@
+#- "${file(dynamodb/children/children.tbl.yml)}"
+#- "${file(dynamodb/children/children-to-rooms.tbl.yml)}"
+#- "${file(dynamodb/children/children-to-parents.tbl.yml)}"
+#- "${file(dynamodb/parents/parents.tbl.yml)}"
+#- "${file(dynamodb/rooms/rooms.tbl.yml)}"
+#- "${file(dynamodb/cameras/cameras.tbl.yml)}"
+#- "${file(dynamodb/cameras/cameras-to-transcoders.tbl.yml)}"
+#- "${file(dynamodb/transcoders/transcoders.tbl.yml)}"
+
+- Resources:
+
+    LambdaAdministratorRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "${file(serverless.yml):custom.name}-lambda-administrator"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: "Allow"
+              Principal:
+                Service:
+                  - "lambda.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Path: "/"
+        Policies:
+          -
+            PolicyName: "${file(serverless.yml):custom.name}-cloud-watch-logs"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:PutLogEvents"
+                    - "logs:DescribeLogStreams"
+                  Resource: "arn:aws:logs:*:*:*"
+          -
+            PolicyName: "${file(serverless.yml):custom.name}-route-53"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "route53:*"
+                  Resource: "*"
+          -
+            PolicyName: "${file(serverless.yml):custom.name}-ec2-snapshots"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "ec2:Describe*"
+                    - "ec2:DeleteSnapshot"
+                    - "ec2:CreateTags"
+                    - "ec2:CreateSnapshot"
+                  Resource: "*"
