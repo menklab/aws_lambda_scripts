@@ -24,35 +24,35 @@ provider:
 
 functions:
   ec2SnapshotRotation:
-    handler: "rotate_volume_snapshots_based_on_tags.init" # required, handler set in AWS Lambda
+    handler: "rotate_volume_snapshots_based_on_tags.handler" # required, handler set in AWS Lambda
     name: "ec2SnapshotRotation" # optional, Deployed Lambda name
     description: "backup and rotate snapshots based upon rules specified in ec2 instance tags."
     timeout: 30 # optional, in seconds, default is 6
     events:
       - schedule: "cron(0 5 ? * * *)"
   ec2VolumeTag:
-    handler: "tag_volumes_with_attached_ec2_tags.init" # required, handler set in AWS Lambda
+    handler: "tag_volumes_with_attached_ec2_tags.handler" # required, handler set in AWS Lambda
     name: "ec2VolumeTag" # optional, Deployed Lambda name
     description: "Tag volumes with their corresponding ec2 instances. This will allow for better snapshot management, etc."
     timeout: 25 # optional, in seconds, default is 6
     events:
       - schedule: "cron(0 5 ? * * *)"
   ec2CnameUpdate:
-    handler: "update_cname_on_ec2_boot_from_tags.init" # required, handler set in AWS Lambda
+    handler: "update_cname_on_ec2_boot_from_tags.handler" # required, handler set in AWS Lambda
     name: "ec2CnameUpdate" # optional, Deployed Lambda name
     description: "Update the cname with the new ip address on boot"
-#    timeout: 10 # optional, in seconds, default is 6
     events:
       - cloudwatchEvent:
-        event:
-          source:
-            - "aws.ec2"
-          detail-type:
-            - "EC2 Instance State-change Notification"
-          detail:
-            state:
-              - "running"
+          event:
+            source:
+              - "aws.ec2"
+            detail-type:
+              - "EC2 Instance State-change Notification"
+            detail:
+              state:
+                - running
           enabled: true
+
 
 
 

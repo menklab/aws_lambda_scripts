@@ -48,10 +48,10 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2SnapshotRotation.zip"
+                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524242403530-2018-04-20T16:40:03.530Z/ec2SnapshotRotation.zip"
               },
               "FunctionName": "ec2SnapshotRotation",
-              "Handler": "rotate_volume_snapshots_based_on_tags.init",
+              "Handler": "rotate_volume_snapshots_based_on_tags.handler",
               "MemorySize": 512,
               "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
               "Runtime": "nodejs6.10",
@@ -69,10 +69,10 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2VolumeTag.zip"
+                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524242403530-2018-04-20T16:40:03.530Z/ec2VolumeTag.zip"
               },
               "FunctionName": "ec2VolumeTag",
-              "Handler": "tag_volumes_with_attached_ec2_tags.init",
+              "Handler": "tag_volumes_with_attached_ec2_tags.handler",
               "MemorySize": 512,
               "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
               "Runtime": "nodejs6.10",
@@ -90,10 +90,10 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2CnameUpdate.zip"
+                "S3Key": "serverless/ec2-management-and-monitoring/dev/1524242403530-2018-04-20T16:40:03.530Z/ec2CnameUpdate.zip"
               },
               "FunctionName": "ec2CnameUpdate",
-              "Handler": "update_cname_on_ec2_boot_from_tags.init",
+              "Handler": "update_cname_on_ec2_boot_from_tags.handler",
               "MemorySize": 512,
               "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
               "Runtime": "nodejs6.10",
@@ -173,6 +173,55 @@
               "SourceArn": {
                 "Fn::GetAtt": [
                   "Ec2VolumeTagEventsRuleSchedule1",
+                  "Arn"
+                ]
+              }
+            }
+          },
+          "Ec2CnameUpdateEventsRuleCloudWatchEvent1": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+              "EventPattern": {
+                "source": [
+                  "aws.ec2"
+                ],
+                "detail-type": [
+                  "EC2 Instance State-change Notification"
+                ],
+                "detail": {
+                  "state": [
+                    "running"
+                  ]
+                }
+              },
+              "State": "ENABLED",
+              "Targets": [
+                {
+                  "Arn": {
+                    "Fn::GetAtt": [
+                      "Ec2CnameUpdateLambdaFunction",
+                      "Arn"
+                    ]
+                  },
+                  "Id": "ec2CnameUpdateCloudWatchEvent"
+                }
+              ]
+            }
+          },
+          "Ec2CnameUpdateLambdaPermissionEventsRuleCloudWatchEvent1": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "Ec2CnameUpdateLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "events.amazonaws.com",
+              "SourceArn": {
+                "Fn::GetAtt": [
+                  "Ec2CnameUpdateEventsRuleCloudWatchEvent1",
                   "Arn"
                 ]
               }
@@ -291,7 +340,7 @@
     ],
     "functions": {
       "ec2SnapshotRotation": {
-        "handler": "rotate_volume_snapshots_based_on_tags.init",
+        "handler": "rotate_volume_snapshots_based_on_tags.handler",
         "name": "ec2SnapshotRotation",
         "description": "backup and rotate snapshots based upon rules specified in ec2 instance tags.",
         "timeout": 30,
@@ -306,7 +355,7 @@
         "vpc": {}
       },
       "ec2VolumeTag": {
-        "handler": "tag_volumes_with_attached_ec2_tags.init",
+        "handler": "tag_volumes_with_attached_ec2_tags.handler",
         "name": "ec2VolumeTag",
         "description": "Tag volumes with their corresponding ec2 instances. This will allow for better snapshot management, etc.",
         "timeout": 25,
@@ -321,23 +370,24 @@
         "vpc": {}
       },
       "ec2CnameUpdate": {
-        "handler": "update_cname_on_ec2_boot_from_tags.init",
+        "handler": "update_cname_on_ec2_boot_from_tags.handler",
         "name": "ec2CnameUpdate",
         "description": "Update the cname with the new ip address on boot",
         "events": [
           {
-            "cloudwatchEvent": null,
-            "event": {
-              "source": [
-                "aws.ec2"
-              ],
-              "detail-type": [
-                "EC2 Instance State-change Notification"
-              ],
-              "detail": {
-                "state": [
-                  "running"
-                ]
+            "cloudwatchEvent": {
+              "event": {
+                "source": [
+                  "aws.ec2"
+                ],
+                "detail-type": [
+                  "EC2 Instance State-change Notification"
+                ],
+                "detail": {
+                  "state": [
+                    "running"
+                  ]
+                }
               },
               "enabled": true
             }
@@ -433,7 +483,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z",
+    "artifactDirectoryName": "serverless/ec2-management-and-monitoring/dev/1524242403530-2018-04-20T16:40:03.530Z",
     "artifact": ""
   }
 }
