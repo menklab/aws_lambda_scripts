@@ -1,11 +1,5 @@
-#- "${file(dynamodb/children/children.tbl.yml)}"
-#- "${file(dynamodb/children/children-to-rooms.tbl.yml)}"
-#- "${file(dynamodb/children/children-to-parents.tbl.yml)}"
-#- "${file(dynamodb/parents/parents.tbl.yml)}"
-#- "${file(dynamodb/rooms/rooms.tbl.yml)}"
-#- "${file(dynamodb/cameras/cameras.tbl.yml)}"
-#- "${file(dynamodb/cameras/cameras-to-transcoders.tbl.yml)}"
-#- "${file(dynamodb/transcoders/transcoders.tbl.yml)}"
+#- "${file(foo/bar.yml)}"
+#- "${file(foo/bar.yml)}"
 
 - Resources:
 

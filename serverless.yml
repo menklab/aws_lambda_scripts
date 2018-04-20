@@ -12,22 +12,53 @@ plugins:
 package:
   individually: true
 
-#functions:
-#  rotate_volume_snapshots_based_on_tags:
-#    handler: "app.init" # required, handler set in AWS Lambda
-#    name: "${self:custom.name}-app" # optional, Deployed Lambda name
-#    description: ${self:custom.name} application run out of lambda # optional, Description to publish to AWS
-
-
 provider:
   name: aws
   runtime: nodejs6.10
   stage: ${opt:stage, 'dev'}
+  memorySize: 512 # optional, in MB, default is 1024
+  timeout: 10 # optional, in seconds, default is 6
+  versionFunctions: false # optional, default is true
+  role: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.name}-lambda-administrator'
+
+
+functions:
+  ec2SnapshotRotation:
+    handler: "rotate_volume_snapshots_based_on_tags.init" # required, handler set in AWS Lambda
+    name: "ec2SnapshotRotation" # optional, Deployed Lambda name
+    description: "backup and rotate snapshots based upon rules specified in ec2 instance tags."
+    timeout: 30 # optional, in seconds, default is 6
+    events:
+      - schedule: "cron(0 5 ? * * *)"
+  ec2VolumeTag:
+    handler: "tag_volumes_with_attached_ec2_tags.init" # required, handler set in AWS Lambda
+    name: "ec2VolumeTag" # optional, Deployed Lambda name
+    description: "Tag volumes with their corresponding ec2 instances. This will allow for better snapshot management, etc."
+    timeout: 25 # optional, in seconds, default is 6
+    events:
+      - schedule: "cron(0 5 ? * * *)"
+  ec2CnameUpdate:
+    handler: "update_cname_on_ec2_boot_from_tags.init" # required, handler set in AWS Lambda
+    name: "ec2CnameUpdate" # optional, Deployed Lambda name
+    description: "Update the cname with the new ip address on boot"
+#    timeout: 10 # optional, in seconds, default is 6
+    events:
+      - cloudwatchEvent:
+        event:
+          source:
+            - "aws.ec2"
+          detail-type:
+            - "EC2 Instance State-change Notification"
+          detail:
+            state:
+              - "running"
+          enabled: true
+
+
 
 custom:
   name: "${self:service}-${self:provider.stage}"
-  nameU: "nurture_repositories_${self:provider.stage}"
-  accountId: 835550300439
+  accountId: ${opt:account-id}
 
 
 resources: ${file(./rolesPolicies.yml)}

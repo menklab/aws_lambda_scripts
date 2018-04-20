@@ -1,0 +1,247 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "Ec2SnapshotRotationLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/ec2SnapshotRotation"
+      }
+    },
+    "Ec2VolumeTagLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/ec2VolumeTag"
+      }
+    },
+    "Ec2CnameUpdateLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/ec2CnameUpdate"
+      }
+    },
+    "Ec2SnapshotRotationLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2SnapshotRotation.zip"
+        },
+        "FunctionName": "ec2SnapshotRotation",
+        "Handler": "rotate_volume_snapshots_based_on_tags.init",
+        "MemorySize": 512,
+        "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
+        "Runtime": "nodejs6.10",
+        "Timeout": 30,
+        "Description": "backup and rotate snapshots based upon rules specified in ec2 instance tags."
+      },
+      "DependsOn": [
+        "Ec2SnapshotRotationLogGroup"
+      ]
+    },
+    "Ec2VolumeTagLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2VolumeTag.zip"
+        },
+        "FunctionName": "ec2VolumeTag",
+        "Handler": "tag_volumes_with_attached_ec2_tags.init",
+        "MemorySize": 512,
+        "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
+        "Runtime": "nodejs6.10",
+        "Timeout": 25,
+        "Description": "Tag volumes with their corresponding ec2 instances. This will allow for better snapshot management, etc."
+      },
+      "DependsOn": [
+        "Ec2VolumeTagLogGroup"
+      ]
+    },
+    "Ec2CnameUpdateLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/ec2-management-and-monitoring/dev/1524240148020-2018-04-20T16:02:28.020Z/ec2CnameUpdate.zip"
+        },
+        "FunctionName": "ec2CnameUpdate",
+        "Handler": "update_cname_on_ec2_boot_from_tags.init",
+        "MemorySize": 512,
+        "Role": "arn:aws:iam::383080306754:role/ec2-management-and-monitoring-dev-lambda-administrator",
+        "Runtime": "nodejs6.10",
+        "Timeout": 10,
+        "Description": "Update the cname with the new ip address on boot"
+      },
+      "DependsOn": [
+        "Ec2CnameUpdateLogGroup"
+      ]
+    },
+    "Ec2SnapshotRotationEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 5 ? * * *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "Ec2SnapshotRotationLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "ec2SnapshotRotationSchedule"
+          }
+        ]
+      }
+    },
+    "Ec2SnapshotRotationLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "Ec2SnapshotRotationLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "Ec2SnapshotRotationEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "Ec2VolumeTagEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 5 ? * * *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "Ec2VolumeTagLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "ec2VolumeTagSchedule"
+          }
+        ]
+      }
+    },
+    "Ec2VolumeTagLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "Ec2VolumeTagLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "Ec2VolumeTagEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "LambdaAdministratorRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "ec2-management-and-monitoring-dev-lambda-administrator",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "ec2-management-and-monitoring-dev-cloud-watch-logs",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": "arn:aws:logs:*:*:*"
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "ec2-management-and-monitoring-dev-route-53",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "route53:*"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "ec2-management-and-monitoring-dev-ec2-snapshots",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:Describe*",
+                    "ec2:DeleteSnapshot",
+                    "ec2:CreateTags",
+                    "ec2:CreateSnapshot"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    }
+  }
+}
