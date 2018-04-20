@@ -1,4 +1,5 @@
 # AWS Administrator Functions
+This is a collection of functions that are installed at the creation of a new AWS Orginization. They help to provide automated administrative tasks that would otherwise be monotonous to do as a human.
 
 ## Install
 `npm install`
