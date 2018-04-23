@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "s3.wwwdev.gwaws.com",
+        "AccessControl": "PublicRead",
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html",
+          "ErrorDocument": "index.htm"
+        }
+      }
+    },
+    "BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Id": "S3PublicSitePolicy",
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "PublicReadForGetBucketObjects",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": "arn:aws:s3:::s3.wwwdev.gwaws.com/*"
+            }
+          ]
+        },
+        "Bucket": {
+          "Ref": "S3Bucket"
+        }
+      }
+    },
+    "Certificate": {
+      "Type": "AWS::CertificateManager::Certificate",
+      "Properties": {
+        "DomainName": "wwwdev.gwaws.com",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "wwwdev.gwaws.com",
+            "ValidationDomain": "gwaws.com"
+          }
+        ]
+      }
+    },
+    "CloudfrontDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Origins": [
+            {
+              "DomainName": "s3.wwwdev.gwaws.com.s3.amazonaws.com",
+              "Id": "s3.wwwdev.gwaws.com",
+              "CustomOriginConfig": {
+                "HTTPPort": "80",
+                "HTTPSPort": "443",
+                "OriginProtocolPolicy": "http-only"
+              }
+            }
+          ],
+          "Enabled": "true",
+          "Comment": "s3 static site hosting",
+          "DefaultRootObject": "index.html",
+          "Aliases": [
+            "wwwdev.gwaws.com"
+          ],
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "DELETE",
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PATCH",
+              "POST",
+              "PUT"
+            ],
+            "TargetOriginId": "s3.wwwdev.gwaws.com",
+            "ForwardedValues": {
+              "QueryString": "false",
+              "Cookies": {
+                "Forward": "none"
+              }
+            },
+            "ViewerProtocolPolicy": "redirect-to-https"
+          },
+          "PriceClass": "PriceClass_100",
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Ref": "Certificate"
+            },
+            "SslSupportMethod": "sni-only"
+          }
+        }
+      }
+    },
+    "Route53": {
+      "Type": "AWS::Route53::RecordSetGroup",
+      "Properties": {
+        "HostedZoneId": "Z1GO7067CKGJ4K",
+        "Comment": "Cloudformation created zone for static s3 website hosting with cloudfront pull through.",
+        "RecordSets": [
+          {
+            "Name": "s3.wwwdev.gwaws.com",
+            "Type": "A",
+            "AliasTarget": {
+              "HostedZoneId": "Z3AQBSTGFYJSTF",
+              "DNSName": {
+                "Fn::Sub": "s3-website-${AWS::Region}.amazonaws.com"
+              }
+            }
+          },
+          {
+            "Name": "wwwdev.gwaws.com",
+            "Type": "A",
+            "AliasTarget": {
+              "HostedZoneId": "Z2FDTNDATAQYW2",
+              "DNSName": {
+                "Ref": "CloudfrontDistribution"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    }
+  }
+}

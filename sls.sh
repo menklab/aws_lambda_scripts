@@ -12,6 +12,7 @@ A helper script to run serverless service stacks from their location
 sls <serverless service> [options]
 options:
  admin
+ cloudwatch
 EOF
     exit 0
 }
@@ -48,6 +49,19 @@ case "${ACTION}" in
         runServerless
 #        popd
         ;;
+
+    cloudwatch)
+        pushd ./cloudwatch
+        runServerless
+        popd
+        ;;
+
+    static-website)
+        pushd ./static-website
+        runServerless
+        popd
+        ;;
+
     *)
         show_help
         exit 0

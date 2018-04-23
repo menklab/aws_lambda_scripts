@@ -1,0 +1,59 @@
+service:
+  name: "cloudwatch-monitoring"
+  publish: false # disable auto-publishing to the Serverless platform
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+plugins:
+  - serverless-pseudo-parameters
+
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512 # optional, in MB, default is 1024
+  timeout: 10 # optional, in seconds, default is 6
+  versionFunctions: false # optional, default is true
+  role: 'arn:aws:iam::${self:custom.accountId}:role/${self:custom.name}-lambda-administrator'
+
+
+
+custom:
+  name: "${self:service}"
+  accountId: ${opt:account-id}
+
+
+resources:
+  Resources:
+    CloudwatchStateAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: "verify that basic server health is ok"
+        AlarmActions:
+        - Ref: CloudwatchSNSTopic
+        MetricName: StatusCheckFailed
+        Namespace: AWS/EC2
+        Statistic: Minimum
+        Period: '60'
+        EvaluationPeriods: '3'
+        Threshold: '0'
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+        - Name: InstanceId
+          Value: "${opt:instance-id}"
+    CloudwatchSNSTopic:
+      Type: "AWS::SNS::Topic"
+      Properties:
+        DisplayName: "Urgent Alert"
+        Subscription:
+          -
+            Endpoint: ${opt:sns-number}
+            Protocol: sms
+          -
+            Endpoint: ${opt:sns-email}
+            Protocol: email
+        TopicName: UrgentAlert

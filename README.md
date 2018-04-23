@@ -26,6 +26,13 @@ This will update a cname record in route53 with the new ipadress of the ec2 inst
 - tag value `<ZONE ID>`
 
 
+##### Cloudwatch Alarm For EC2
+Create a subscription for Email and SMS alerts. It will also register a cloudwatch function to monitor the state of an ec2 instance.
+`./sls.sh cloudwatch deploy --instance-id <INSTANCE ID> --sns-number <15555555555> --sns-email "<EMAIL ADDRESS>" --account-id <ACCOUNT ID>`
+
+
+##### Static Website With Cloudfront Distribution
+Create a new S3 bucket, Cloudfront distribution, and route53 routes
 
 
 ### Helpful Tools

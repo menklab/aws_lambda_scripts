@@ -1,0 +1,57 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "CloudwatchStateAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "verify that basic server health is ok",
+        "AlarmActions": [
+          {
+            "Ref": "CloudwatchSNSTopic"
+          }
+        ],
+        "MetricName": "StatusCheckFailed",
+        "Namespace": "AWS/EC2",
+        "Statistic": "Minimum",
+        "Period": "60",
+        "EvaluationPeriods": "3",
+        "Threshold": "0",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": "i-011559803ad21953c"
+          }
+        ]
+      }
+    },
+    "CloudwatchSNSTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "Urgent Alert",
+        "Subscription": [
+          {
+            "Endpoint": 16164467257,
+            "Protocol": "sms"
+          },
+          {
+            "Endpoint": "justin@menklab.com",
+            "Protocol": "email"
+          }
+        ],
+        "TopicName": "UrgentAlert"
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    }
+  }
+}
