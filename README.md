@@ -33,7 +33,7 @@ Create a subscription for Email and SMS alerts. It will also register a cloudwat
 
 ##### Static Website With Cloudfront Distribution
 Create a new S3 bucket, Cloudfront distribution, and route53 routes
-
+`./sls.sh static-website deploy --bucket-name <BUCKET NAME> --hosted-zone-id <HOSTED ZONE> --aws-profile <AWS PROFILE> --verification-domain example.com`
 
 ### Helpful Tools
 - cwtail - used to tail lambda functions  

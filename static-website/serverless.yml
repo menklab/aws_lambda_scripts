@@ -18,7 +18,7 @@ provider:
 
 custom:
   name: "${self:service}-${opt:bucket-name}-${self:provider.stage}"
-  accountId: ${opt:account-id}
+  accountId: #{AWS::AccountId}
   s3BucketName: "s3.${opt:bucket-name}"
   regionMap:
       us-east-1:
